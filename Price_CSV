@@ -1,0 +1,30 @@
+import csv
+from bs4 import BeautifulSoup
+
+soup = BeautifulSoup(r.text, "html.parser")
+
+# 網站中會藏著查詢標籤 裡面包含多餘的資訊
+# 會發現每一種幣值的資訊都藏在 <tr> 中
+# soup.find_all("tr") #會連同欄位名稱都抓出來
+# 先找 tbody 再找全部的tr 就不會撈到欄位
+# find_all 會是一個 list
+
+update_time = soup.find("span",{"class":"time"}).text
+print(update_time)
+
+file_name = update_time.replace('/','_').replace(':','_')
+
+
+with open(f"台灣銀行_{file_name}.csv", "w", encoding="utf-8", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerow(["幣值", "買入", "賣出"])
+
+    tbody = soup.find("tbody")
+    trs = tbody.find_all("tr") 
+    for tr in trs:
+        # strip 去除換行跟空白
+        currency = tr.find("div",{"class":"visible-phone print_hide"}).text.strip()
+        buy = tr.find("td",{"data-table":"本行現金買入"}).text
+        sell = tr.find("td",{"data-table":"本行現金賣出"}).text
+        # print(f"{currency} | {buy} | {sell}")
+        writer.writerow([currency, buy, sell])
